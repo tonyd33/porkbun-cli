@@ -124,7 +124,8 @@ create() {
   "name": "$NAME",
   "type": "$TYPE",
   "content": "$CONTENT",
-  "ttl": "$TTL"
+  "ttl": "$TTL",
+  "prio": "$PRIO"
 }
 
 $CREDENTIALS_BODY
@@ -169,7 +170,8 @@ edit() {
   "name": "$NAME",
   "type": "$TYPE",
   "content": "$CONTENT",
-  "ttl": "$TTL"
+  "ttl": "$TTL",
+  "prio": "$PRIO"
 }
 
 $CREDENTIALS_BODY
@@ -215,7 +217,8 @@ edit_by_name_type() {
   BODY=$(cat <<EOF | jq -sr 'add | with_entries(select(.value | . != ""))'
 {
   "content": "$CONTENT",
-  "ttl": "$TTL"
+  "ttl": "$TTL",
+  "prio": "$PRIO"
 }
 
 $CREDENTIALS_BODY
@@ -355,11 +358,16 @@ upsert_by_name_type() {
         --prio "$PRIO"
       ;;
     1)
-      edit_by_name_type "$DOMAIN" "$SUBDOMAIN" \
-        --type "$TYPE" \
-        --content "$CONTENT" \
-        --ttl "$TTL" \
-        --prio "$PRIO"
+      EXISTING_CONTENT="$(echo "$RECORD_INFO" | jq -r '.records[0].content')"
+      if [ "$EXISTING_CONTENT" != "$CONTENT" ]; then
+        edit_by_name_type "$DOMAIN" "$SUBDOMAIN" \
+          --type "$TYPE" \
+          --content "$CONTENT" \
+          --ttl "$TTL" \
+          --prio "$PRIO"
+      else
+        echo "$SUBDOMAIN.$DOMAIN already has a $TYPE record for $CONTENT, skipping..." >&2
+      fi
       ;;
     *)
       case "$MULTIPLE_BEHAVIOR" in
