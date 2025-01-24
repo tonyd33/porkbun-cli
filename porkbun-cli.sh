@@ -58,7 +58,7 @@ EOF
 [ -f "$CREDENTIALS_PATH" ] && source "$CREDENTIALS_PATH"
 
 # BEGIN: Global arg parse
-GLOBAL_OPTS="$(getopt -o 'k:s:' -l 'api-key:,secret-api-key:,dry-run' --name "$0" -- "$@")"
+GLOBAL_OPTS="$(getopt -o 'k:s:h' -l 'api-key:,secret-api-key:,dry-run,help' --name "$0" -- "$@")"
 eval set -- "$GLOBAL_OPTS"
 
 while true; do
@@ -66,6 +66,7 @@ while true; do
     --api-key|-k)        PORKBUN_API_KEY="$2"; shift 2;;
     --secret-api-key|-s) PORKBUN_SECRET_API_KEY="$2"; shift 2;;
     --dry-run)           DRY_RUN=1; shift;;
+    --help|-h)           print_help; exit 1;;
     --)                  shift; break;;
     *)                   print_help; exit 1;;
   esac
@@ -89,7 +90,6 @@ EOF
 SUBCOMMAND="$1"
 shift
 
-
 create() {
   DOMAIN="${1:-}"
   shift
@@ -109,7 +109,6 @@ create() {
     esac
   done
   NAME="${1:-}"
-  shift
 
   if [ -z "${DOMAIN:-}" ] ||\
     [ -z "${TYPE:-}" ] ||\
@@ -200,7 +199,6 @@ edit_by_name_type() {
     esac
   done
   SUBDOMAIN="${1:-}"
-  shift
 
   if [ -z "${DOMAIN:-}" ] ||\
     [ -z "${TYPE:-}" ] ||\
@@ -259,7 +257,6 @@ delete_by_name_type() {
     esac
   done
   SUBDOMAIN="${1:-}"
-  shift
 
   if [ -z "${DOMAIN:-}" ] ||\
     [ -z "${TYPE:-}" ]; then
@@ -307,7 +304,6 @@ retrieve_by_name_type() {
     esac
   done
   SUBDOMAIN="${1:-}"
-  shift
 
   if [ -z "${DOMAIN:-}" ] ||\
     [ -z "${TYPE:-}" ]; then
@@ -344,7 +340,6 @@ upsert_by_name_type() {
     esac
   done
   SUBDOMAIN="${1:-}"
-  shift
 
   RECORD_INFO=$(retrieve_by_name_type "$DOMAIN" "$SUBDOMAIN" --type "$TYPE")
   NUM_RECORDS=$(echo "$RECORD_INFO" | jq '.records | length')
@@ -367,6 +362,7 @@ upsert_by_name_type() {
           --prio "$PRIO"
       else
         echo "$SUBDOMAIN.$DOMAIN already has a $TYPE record for $CONTENT, skipping..." >&2
+        return 0
       fi
       ;;
     *)
